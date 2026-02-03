@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Submarino Battle</title>
+
+<link rel="apple-touch-icon" sizes="1024x1024" href="icon-1024.png">
+<link rel="icon" type="image/png" sizes="1024x1024" href="icon-1024.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Submarino Battle">
+
+<style>
+body{
+ margin:0;
+ font-family:Arial;
+ background:linear-gradient(#0d47a1,#000814);
+ color:#fff;
+ text-align:center;
+}
+header{padding:15px;font-size:22px;font-weight:bold}
+#marcador,#info{
+ background:#001f3f;
+ padding:10px;
+ border-radius:14px;
+ margin:10px;
+ font-size:18px;
+}
+.contenedor{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+}
+.tablero-box{margin:10px}
+.tablero{
+ display:grid;
+ grid-template-columns:repeat(5,1fr);
+ gap:10px;
+ padding:10px;
+}
+.celda{
+ background:#0288d1;
+ height:60px;
+ width:60px;
+ border-radius:14px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:24px;
+ cursor:pointer;
+}
+.celda.jugador{cursor:default}
+.hit{background:#c62828}
+.miss{background:#01579b}
+.miss-maquina{background:#003c8f}
+#mensajeFinal{font-size:22px;margin:15px;font-weight:bold}
+button{
+ margin:10px;
+ padding:12px;
+ width:90%;
+ max-width:300px;
+ font-size:16px;
+ border:none;
+ border-radius:20px;
+ background:#00c853;
+}
+</style>
+</head>
+
+<body>
+
+<header>🚢 SUBMARINO BATTLE</header>
+
+<div id="marcador">
+ 🧑 Jugador: <span id="scoreJugador">0</span> |
+ 🤖 Máquina: <span id="scoreMaquina">0</span>
+</div>
+
+<div id="info">
+ Intentos: <span id="intentos">0</span> |
+ 🏆 Récord: <span id="record">0</span>
+</div>
+
+<div id="mensajeFinal"></div>
+
+<div class="contenedor">
+ <div class="tablero-box">
+  <h3>🧑 TU TABLERO</h3>
+  <div class="tablero" id="tableroJugador"></div>
+ </div>
+ <div class="tablero-box">
+  <h3>🤖 TABLERO ENEMIGO</h3>
+  <div class="tablero" id="tableroMaquina"></div>
+ </div>
+</div>
+
+<button onclick="reiniciar()">🔄 Reiniciar</button>
+
+<script>
+const size=25, TOTAL=5;
+let sj=[], sm=[], pj=0, pm=0, it=0, dm=[], fin=false;
+
+const tj=document.getElementById("tableroJugador");
+const tm=document.getElementById("tableroMaquina");
+const sjE=document.getElementById("scoreJugador");
+const smE=document.getElementById("scoreMaquina");
+const itE=document.getElementById("intentos");
+const mf=document.getElementById("mensajeFinal");
+const rE=document.getElementById("record");
+let rec=localStorage.getItem("recordSubmarino")||0;
+rE.textContent=rec;
+
+const hit=new Audio("https://assets.mixkit.co/sfx/preview/mixkit-arcade-explosion-2759.mp3");
+const miss=new Audio("https://assets.mixkit.co/sfx/preview/mixkit-water-splash-1187.mp3");
+
+function crear(){
+ let a=[];
+ while(a.length<TOTAL){
+  let p=Math.floor(Math.random()*size);
+  if(!a.includes(p)) a.push(p);
+ }
+ return a;
+}
+
+function iniciar(){
+ tj.innerHTML=""; tm.innerHTML=""; mf.textContent=""; fin=false;
+ sj=crear(); sm=crear();
+ for(let i=0;i<size;i++){
+  let cj=document.createElement("div");
+  cj.className="celda jugador";
+  tj.appendChild(cj);
+
+  let cm=document.createElement("div");
+  cm.className="celda";
+  cm.onclick=()=>disparo(i,cm);
+  tm.appendChild(cm);
+ }
+}
+
+function disparo(i,c){
+ if(fin||c.textContent) return;
+ it++; itE.textContent=it;
+ if(sm.includes(i)){
+  pj++; sjE.textContent=pj;
+  sm=sm.filter(x=>x!==i);
+  c.textContent="💥"; c.classList.add("hit"); hit.play();
+  if(pj===TOTAL) terminar("🎉 GANASTE");
+ }else{
+  c.textContent="💦"; c.classList.add("miss"); miss.play();
+  setTimeout(turno,600);
+ }
+}
+
+function turno(){
+ if(fin) return;
+ let t;
+ do{t=Math.floor(Math.random()*size);}while(dm.includes(t));
+ dm.push(t);
+ let c=tj.children[t];
+ if(sj.includes(t)){
+  pm++; smE.textContent=pm;
+  sj=sj.filter(x=>x!==t);
+  c.textContent="💥"; c.classList.add("hit"); hit.play();
+  if(pm===TOTAL) terminar("💀 PERDISTE");
+ }else{
+  c.textContent="💦"; c.classList.add("miss-maquina"); miss.play();
+ }
+}
+
+function terminar(t){
+ fin=true; mf.textContent=t;
+ if(t.includes("GANASTE")&&(it<rec||rec==0)){
+  localStorage.setItem("recordSubmarino",it);
+  rE.textContent=it;
+ }
+}
+
+function reiniciar(){
+ pj=pm=it=0; dm=[];
+ sjE.textContent=0; smE.textContent=0; itE.textContent=0;
+ iniciar();
+}
+
+iniciar();
+</script>
+</body>
+</html>
